@@ -21,39 +21,30 @@ numbers_upper = 8
 # hver gang, om verdiene over ikke endres.
 seed = 0
 
-
-from random import randint
 def k_largest(A, n, k):
     if k==0:
         return []
     if k==1:
         return [max(A)]
-    qSort(A, n, k)
-    return A[n-k:n]
-
-def qSort(A, n, k):
-    a, b = 0, n
-    while True:
-        p = partition(A, a, b-1)
-        if(p<n-k):
-            a = p
-        elif(p>len(A)-k):
-            b = p
+    a, b = 0, n-1
+    while a<=b:
+        p = partition(A, a, b)
+        if p<n-k:
+            a = p + 1
+        elif p>n-k:
+            b = p - 1
         else:
-            return
+            return A[n-k:]
 
 def partition(A, p, r):
-    rand = randint(p, r)
-    x = A[rand]
-    A[rand], A[r] = A[r], A[rand]
-    i = p-1
+    x = A[r]
+    i = p
     for j in range(p, r):
         if A[j]<=x:
-            i+=1
             A[i], A[j] = A[j], A[i]
-    A[i+1], A[r] = A[r], A[i+1] 
-    return i+1
-
+            i += 1
+    A[i], A[r] = A[r], A[i]
+    return i
 
 # Sett med hardkodete tester på format: (A, k)
 tests = [

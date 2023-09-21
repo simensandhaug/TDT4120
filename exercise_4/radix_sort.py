@@ -29,25 +29,28 @@ n_diff_chars = 5
 # hver gang, om verdiene over ikke endres.
 seed = 0
 
-def flexradix(A, n, d):
-    buckets = [[] for _ in range(d+1)]
-    for name in A:
-        buckets[len(name)].append(name)
-    min_l = d
-    names=[]
-    while min_l:
-        if buckets[min_l]:
-            names = buckets[min_l] + names
-        if len(names) > 1:
-            names = sort(names, min_l-1)
-        min_l -= 1
-    return names
+from collections import defaultdict
 
-def sort(A, i):
-    buckets = [[] for _ in range(26)]
+def flexradix(A, n, d):
+    # Use a defaultdict to store names by their lengths
+    by_length = defaultdict(list)
+    
     for name in A:
-        buckets[97 - ord(name[i])].append(name)
-    return [name for bucket in buckets for name in bucket]
+        by_length[len(name)].append(name)
+    
+    sorted_names = []
+    
+    # Sort names lexicographically within each length group,
+    # then add them to the final sorted list
+    for length in range(d, 0, -1):
+        if by_length[length]:
+            # Sort the names by all positions in one pass
+            by_length[length].sort()
+            # Append the sorted names to the final list
+            sorted_names.extend(by_length[length])
+
+    # The final list is already lexicographically sorted
+    return sorted_names
             
         
     
