@@ -29,33 +29,49 @@ k_upper = 20
 # hver gang, om verdiene over ikke endres.
 seed = 0
 
+from collections import deque
 
-def search_tree(root, dna, p, q):
-    ans = 0
-    for i in range(p, q + 1):
-        ans += root.count
-        if i == q or dna[i] not in root.children:
-            break
-        root = root.children[dna[i]]
-    return ans
-
-def build_tree(dna_sequences):
+def build_ac_automaton(patterns):
     root = Node()
-    max_length = 0
-    for s in dna_sequences:
-        max_length = max(len(s), max_length)
-        current_node = root
-        for char in s:
-            current_node = current_node.children.setdefault(char, Node())
-        current_node.count += 1
-    return root, max_length
+    # Build the trie for the given patterns
+    for pattern in patterns:
+        node = root
+        for char in pattern:
+            if char not in node.children:
+                node.children[char] = Node()
+            node = node.children[char]
+        node.count += 1
+    
+    # Build the failure links
+    fail_links = {root: None}
+    q = deque()
+    for child in root.children.values():
+        fail_links[child] = root
+        q.append(child)
+
+    while q:
+        curr = q.popleft()
+        for char, child in curr.children.items():
+            fail = fail_links[curr]
+            while fail and char not in fail.children:
+                fail = fail_links[fail]
+            fail_links[child] = fail.children[char] if fail else root
+            child.count += fail_links[child].count
+            q.append(child)
+
+    return root, fail_links
 
 def string_match(dna, segments):
-    root, max_length = build_tree(segments)
-    ans = 0
-    for i in range(len(dna)):
-        ans += search_tree(root, dna, i, min(len(dna), i + max_length))
-    return ans
+    root, fail_links = build_ac_automaton(segments)
+    total_count = 0
+    node = root
+    for char in dna:
+        while node and char not in node.children:
+            node = fail_links[node]
+        node = node.children[char] if node else root
+        total_count += node.count
+    return total_count
+
 
 
 class Node:
