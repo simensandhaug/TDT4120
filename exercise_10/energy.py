@@ -26,45 +26,47 @@ seed = 0
 
 import heapq
 
-def least_energy(reactions, start, goal, laws_of_thermodynamics=True):
-    # Create an adjacency list
-    adjacency = {}
+from math import inf
+from heapq import heappush, heappop
+from collections import defaultdict
+
+def least_energy(reactions, start, goal):
+    # Initialize the adjacency list and distances
+    adjacency = defaultdict(list)
+    distance = {start: 0}
+    previous = {start: None}
+
     for a, b, e in reactions:
-        if a not in adjacency:
-            adjacency[a] = []
         adjacency[a].append((b, e))
+        # Initialize distances with infinity for all nodes except the start
+        if b not in distance:
+            distance[b] = inf
 
-    # Initialize distances and previous node pointers
-    distance = {node: float('inf') for node in adjacency}
-    distance[start] = 0
-    previous = {node: None for node in adjacency}
-    previous[start] = None
+    # Use a priority queue to always process the node with the lowest energy cost
+    queue = [(0, start)]
 
-    # Create a priority queue and add the start node
-    priority_queue = [(0, start)]
+    while queue:
+        current_energy, node = heappop(queue)
 
-    while priority_queue:
-        # Pop the node with the smallest distance
-        current_distance, current_node = heapq.heappop(priority_queue)
+        # Iterate through the neighbors of the current node
+        for neighbour, energy_cost in adjacency[node]:
+            # Calculate new energy cost for neighbour
+            new_energy = current_energy + energy_cost
 
-        # If we reached the goal, reconstruct the path
-        if current_node == goal:
-            path = []
-            while current_node is not None:
-                path.insert(0, current_node)
-                current_node = previous[current_node]
-            return path
+            # If the new energy cost is less, update the distance and previous node
+            if new_energy < distance[neighbour]:
+                distance[neighbour] = new_energy
+                previous[neighbour] = node
+                heappush(queue, (new_energy, neighbour))
 
-        # Update distances to neighbors
-        for neighbor, energy in adjacency.get(current_node, []):
-            if not laws_of_thermodynamics and neighbor == current_node:
-                continue
+    # Reconstruct the path from start to goal
+    path = []
+    current = goal
+    while current is not None:
+        path.insert(0, current)
+        current = previous[current]
 
-            new_distance = current_distance + energy
-            if new_distance < distance[neighbor]:
-                distance[neighbor] = new_distance
-                previous[neighbor] = current_node
-                heapq.heappush(priority_queue, (new_distance, neighbor))
+    return path
 
 # Example usage
 
